@@ -1,0 +1,51 @@
+---
+title: 'MSD Final Project Report'
+author: 'Forrest Hofmann (fhh2112) & Sagar Lal (sl3946)'
+date: '`r Sys.time()`'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+theme_set(theme_bw())
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+## Problem Description
+
+## Motivation
+
+## Data Source
+
+
+# Reproduction
+
+## Reproduction Code
+
+```{r example-1}
+
+```
+
+## Reproduction Notes
+
+## Reproduction Analysis
+
+
+# Extension
+
+## Extension Code
+
+```{r example-2}
+
+```
+
+## Extension Notes
+
+## Extension Analysis
