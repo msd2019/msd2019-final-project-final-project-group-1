@@ -80,35 +80,38 @@ salaries_old <- salaries %>%
 
 ```{r summary-statistics}
 summary(teams_old$winPercentage)
+sd(teams_old$winPercentage)
 summary(teams_old$totalSalaryMil)
+sd(teams_old$totalSalaryMil)
 summary(teams_old$HHI)
+sd(teams_old$HHI)
 ```
 
 ```{r linear-fixed-effects-regression-old}
 linear_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
                                                  normalizedYear + teamID + 0,
                        data = teams_old)
-summary(linear_fixed_old)$coefficients
+summary(linear_fixed_old)$coefficients[1:3,]
 ```
 
 ```{r linear-random-effects-regression-old}
 linear_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
                         data = teams_old)
-summary(linear_random_old)$coefficients
+summary(linear_random_old)$coefficients[1:4,]
 ```
 
 ```{r log-log-fixed-effects-regression-old}
 log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
                                                        normalizedYear + teamID + 0,
                         data = teams_old)
-summary(log_log_fixed_old)$coefficients
+summary(log_log_fixed_old)$coefficients[1:3,]
 ```
 
 ```{r log-log-random-effects-regression-old}
 log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
                                                         normalizedYear,
                          data = teams_old)
-summary(log_log_random_old)$coefficients
+summary(log_log_random_old)$coefficients[1:4,]
 ```
 
 ## Reproduction Notes
@@ -136,7 +139,7 @@ ggplot(data = salary_vs_time) +
   geom_point(aes(x = yearID, y = max, color = 'Maximum')) + 
   geom_smooth(aes(x = yearID, y = max, color = 'Maximum')) +
   scale_color_manual(values = c('#4286f4', '#f44741')) +
-  scale_y_continuous(labels = comma) + 
+  scale_y_log10(labels = comma) + 
   labs(color = 'Type') +
   xlab('Year') +
   ylab('Player Salary')
@@ -208,15 +211,13 @@ ggplot(data = hhi_vs_time) +
   geom_point(aes(x = yearID, y = avg)) +
   geom_smooth(aes(x = yearID, y = avg)) + 
   xlab('Year') +
-  ylab('Average Intrateam HHI')
+  ylab('Average Team HHI')
 ```
 
 ```{r hhi-distributions, message = FALSE, out.width = '55%', fig.align = 'center'}
-ws_winners <- filter(teams, WSWin)
-
 ggplot(data = filter(teams, mean(teams$HHI) - 5 * sd(teams$HHI) <= HHI & HHI <= mean(teams$HHI) + 5 * sd(teams$HHI))) +
   geom_histogram(aes(x = HHI, y = (..count..) / sum(..count..))) +
-  geom_vline(data = ws_winners, aes(xintercept = HHI), color = 'blue') +
+  geom_vline(data = filter(teams, WSWin), aes(xintercept = HHI), color = 'blue', linetype = 'dashed') +
   xlab('Team HHI') +
   ylab('Fraction of All HHI Values')
 ```
@@ -236,6 +237,7 @@ year_to_period <- function(year) {
 
 hhi_vs_total_salary <- teams %>%
   mutate(period = year_to_period(yearID))
+hhi_vs_total_salary$period <- factor(hhi_vs_total_salary$period, levels = c('Pre 1993', 'Between 1993 and 1997', 'Post 1997'))
 
 ggplot(data = hhi_vs_total_salary) +
   geom_point(aes(x = totalSalaryMil * 1000000, y = HHI, color = period)) +
@@ -259,27 +261,27 @@ salaries_new <- salaries %>%
 linear_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
                                                  normalizedYear + teamID + 0,
                        data = teams_new)
-summary(linear_fixed_new)$coefficients
+summary(linear_fixed_new)$coefficients[1:3,]
 ```
 
 ```{r linear-random-effects-regression-new}
 linear_random_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
                         data = teams_new)
-summary(linear_random_new)$coefficients
+summary(linear_random_new)$coefficients[1:4,]
 ```
 
 ```{r log-log-fixed-effects-regression-new}
 log_log_fixed_new <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
                                                        normalizedYear + teamID + 0,
                         data = teams_new)
-summary(log_log_fixed_new)$coefficients
+summary(log_log_fixed_new)$coefficients[1:3,]
 ```
 
 ```{r log-log-random-effects-regression-new}
 log_log_random_new <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
                                                         normalizedYear,
                          data = teams_new)
-summary(log_log_random_new)$coefficients
+summary(log_log_random_new)$coefficients[1:4,]
 ```
 
 ## Extension Notes
