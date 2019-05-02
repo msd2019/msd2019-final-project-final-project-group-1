@@ -9,6 +9,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+library(here)
 library(tidyverse)
 
 theme_set(theme_bw())
@@ -29,8 +30,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Reproduction Code
 
-```{r example-1}
-
+```{r load-data}
+teams <- read_csv(here('teams.csv'))
+salaries <- read_csv(here('salaries.csv'))
 ```
 
 ## Reproduction Notes

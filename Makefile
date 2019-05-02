@@ -1,8 +1,14 @@
 # default target is the final report
-all: 02_final_report.pdf
+all: 03_final_report.pdf
 
 baseballdatabank-2019.2:
 	bash 01_download_data.sh
 
-02_final_report.pdf: baseballdatabank-2019.2
-	Rscript -e "rmarkdown::render('02_final_report.Rmd')"
+salaries.csv: baseballdatabank-2019.2
+	bash 02_select_data.sh
+
+teams.csv: baseballdatabank-2019.2
+	bash 02_select_data.sh
+
+03_final_report.pdf: salaries.csv teams.csv
+	Rscript -e "rmarkdown::render('03_final_report.Rmd')"
