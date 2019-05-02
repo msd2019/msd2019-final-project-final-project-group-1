@@ -150,19 +150,19 @@ ggplot(data = salaries_1985) +
   geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
   scale_x_continuous(labels = comma) + 
   xlab('Player Salary in 1985') +
-  ylab('Percentage of All Salaries in 1985')
+  ylab('Fraction of All Salaries in 1985')
 
 ggplot(data = salaries_1998) +
   geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
   scale_x_continuous(labels = comma) + 
   xlab('Player Salary in 1998') +
-  ylab('Percentage of All Salaries in 1998')
+  ylab('Fraction of All Salaries in 1998')
 
 ggplot(data = salaries_2016) +
   geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
   scale_x_continuous(labels = comma) + 
   xlab('Player Salary in 2016') +
-  ylab('Percentage of All Salaries in 2016')
+  ylab('Fraction of All Salaries in 2016')
 ```
 
 ```{r team-salary-vs-time, message = FALSE, out.width = '80%', fig.align = 'center'}
@@ -210,6 +210,13 @@ ggplot(data = hhi_vs_time) +
   ylab('Average Intrateam HHI')
 ```
 
+```{r hhi-distributions, message = FALSE, out.width = '55%', fig.align = 'center'}
+ggplot(data = teams) +
+  geom_histogram(aes(x = HHI, y = (..count..) / sum(..count..))) +
+  xlab('Team HHI') +
+  ylab('Fraction of All HHI Values')
+```
+
 ```{r hhi-vs-total-salary, message = FALSE, out.width = '70%', fig.align = 'center'}
 year_to_period <- function(year) {
   if (year <= 1992) {
@@ -236,24 +243,39 @@ ggplot(data = hhi_vs_total_salary) +
 ```
 
 ```{r subset-new-data, message = FALSE}
-teams_old <- teams %>%
+teams_new <- teams %>%
   filter(1999 <= yearID & yearID <= 2016) %>%
   mutate(normalizedYear = yearID - 1999)
 
-salaries_old <- salaries %>%
+salaries_new <- salaries %>%
   filter(1999 <= yearID & yearID <= 2016)
 ```
 
 ```{r linear-fixed-effects-regression-new}
+linear_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
+                                                 normalizedYear + teamID + 0,
+                       data = teams_new)
+summary(linear_fixed_new)$coefficients
 ```
 
 ```{r linear-random-effects-regression-new}
+linear_random_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
+                        data = teams_new)
+summary(linear_random_new)$coefficients
 ```
 
 ```{r log-log-fixed-effects-regression-new}
+log_log_fixed_new <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
+                                                       normalizedYear + teamID + 0,
+                        data = teams_new)
+summary(log_log_fixed_new)$coefficients
 ```
 
 ```{r log-log-random-effects-regression-new}
+log_log_random_new <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
+                                                        normalizedYear,
+                         data = teams_new)
+summary(log_log_random_new)$coefficients
 ```
 
 ## Extension Notes
