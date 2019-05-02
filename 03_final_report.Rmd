@@ -34,30 +34,30 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r load-data}
 teams <- read_csv(here('teams.csv'))
 salaries <- read_csv(here('salaries.csv'))
-salaries$salary <- salaries$salary / 1000000
 ```
 
-```{r filter-old-data}
-teams_old <- filter(teams, 1985 <= yearID & yearID <= 1998)
-salaries_old <- filter(salaries, 1985 <= yearID & yearID <= 1998)
-```
+```{r clean-old-data}
+teams_old <- teams %>%
+  filter(1985 <= yearID & yearID <= 1998) %>%
+  mutate(winPercentage = W / (W + L) * 1000) %>%
+  mutate(normalizedYear = yearID - 1985)
 
-```{r compute-team-win-percentage}
-teams_old <- teams_old %>%
-  mutate(winPercentage = W / (W + L))
+salaries_old <- salaries %>%
+  filter(1985 <= yearID & yearID <= 1998) %>%
+  mutate(salaryMil = salary / 1000000)
 ```
 
 ```{r compute-team-salary-total}
 teams_old <- teams_old %>%
   inner_join(salaries_old) %>%
-  group_by(yearID, teamID, G, W, L, winPercentage) %>%
-  summarize(totalSalary = sum(salary))
+  group_by(yearID, teamID, G, W, L, winPercentage, normalizedYear) %>%
+  summarize(totalSalaryMil = sum(salaryMil))
 ```
 
 ```{r compute-player-salary-share}
 salaries_old <- salaries_old %>% 
   inner_join(teams_old) %>%
-  mutate(salaryShare = salary / totalSalary * 100) %>%
+  mutate(salaryShare = salaryMil / totalSalaryMil * 100) %>%
   mutate(salaryShareSquared = salaryShare ^ 2) %>%
   select(yearID, teamID, playerID, salary, salaryShare, salaryShareSquared)
 ```
@@ -65,16 +65,39 @@ salaries_old <- salaries_old %>%
 ```{r compute-team-salary-hhi}
 teams_old <- teams_old %>%
   inner_join(salaries_old) %>%
-  group_by(yearID, teamID, G, W, L, winPercentage, totalSalary) %>%
+  group_by(yearID, teamID, G, W, L, winPercentage, totalSalaryMil, normalizedYear) %>%
   summarize(HHI = sum(salaryShareSquared))
 ```
 
 ```{r summary-statistics}
 summary(teams_old$winPercentage)
-summary(teams_old$totalSalary)
+summary(teams_old$totalSalaryMil)
 summary(teams_old$HHI)
 ```
 
+```{r linear-fixed-effects-regression}
+linear_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear + teamID + 0,
+                       data = teams_old)
+summary(linear_fixed_old)$coefficients
+```
+
+```{r linear-random-effects-regression}
+linear_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
+                        data = teams_old)
+summary(linear_random_old)$coefficients
+```
+
+```{r log-log-fixed-effects-regression}
+log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear + teamID + 0,
+                        data = teams_old)
+summary(log_log_fixed_old)$coefficients
+```
+
+```{r log-log-random-effects-regression}
+log_log_random_old <- lm(log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear,
+                         data = teams_old)
+summary(log_log_random_old)$coefficients
+```
 
 ## Reproduction Notes
 
