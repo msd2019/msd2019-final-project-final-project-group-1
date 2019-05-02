@@ -34,6 +34,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r load-data}
 teams <- read_csv(here('teams.csv'))
 salaries <- read_csv(here('salaries.csv'))
+salaries$salary <- salaries$salary / 1000000
 ```
 
 ```{r filter-old-data}
@@ -43,7 +44,7 @@ salaries_old <- filter(salaries, 1985 <= yearID & yearID <= 1998)
 
 ```{r compute-team-win-percentage}
 teams_old <- teams_old %>%
-  mutate(winPercentage = W / G)
+  mutate(winPercentage = W / (W + L))
 ```
 
 ```{r compute-team-salary-total}
@@ -56,7 +57,7 @@ teams_old <- teams_old %>%
 ```{r compute-player-salary-share}
 salaries_old <- salaries_old %>% 
   inner_join(teams_old) %>%
-  mutate(salaryShare = salary / totalSalary) %>%
+  mutate(salaryShare = salary / totalSalary * 100) %>%
   mutate(salaryShareSquared = salaryShare ^ 2) %>%
   select(yearID, teamID, playerID, salary, salaryShare, salaryShareSquared)
 ```
@@ -79,6 +80,8 @@ summary(teams_old$HHI)
 
 - original author did not describe how time fixed effects are accounted for (across expansion periods or every year)
 - no discussion about limiting to 25 man roster vs 40 man roster
+- no discussion of cut players, traded players
+- no discussion of signing bonuses
 
 ## Reproduction Analysis
 
