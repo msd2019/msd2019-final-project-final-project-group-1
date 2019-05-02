@@ -94,7 +94,7 @@ summary(log_log_fixed_old)$coefficients
 ```
 
 ```{r log-log-random-effects-regression}
-log_log_random_old <- lm(log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear,
+log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear,
                          data = teams_old)
 summary(log_log_random_old)$coefficients
 ```

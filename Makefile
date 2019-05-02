@@ -10,5 +10,5 @@ salaries.csv: baseballdatabank-2019.2
 teams.csv: baseballdatabank-2019.2
 	bash 02_select_data.sh
 
-03_final_report.pdf: salaries.csv teams.csv
+03_final_report.pdf: salaries.csv teams.csv 03_final_report.Rmd
 	Rscript -e "rmarkdown::render('03_final_report.Rmd')"
