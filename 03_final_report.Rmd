@@ -11,6 +11,7 @@ output:
 ```{r setup, include=FALSE}
 library(here)
 library(tidyverse)
+library(scales)
 
 theme_set(theme_bw())
 
@@ -35,7 +36,49 @@ teams <- read_csv(here('teams.csv'))
 salaries <- read_csv(here('salaries.csv'))
 ```
 
+```{r filter-old-data}
+teams_old <- filter(teams, 1985 <= yearID & yearID <= 1998)
+salaries_old <- filter(salaries, 1985 <= yearID & yearID <= 1998)
+```
+
+```{r compute-team-win-percentage}
+teams_old <- teams_old %>%
+  mutate(winPercentage = W / G)
+```
+
+```{r compute-team-salary-total}
+teams_old <- teams_old %>%
+  inner_join(salaries_old) %>%
+  group_by(yearID, teamID, G, W, L, winPercentage) %>%
+  summarize(totalSalary = sum(salary))
+```
+
+```{r compute-player-salary-share}
+salaries_old <- salaries_old %>% 
+  inner_join(teams_old) %>%
+  mutate(salaryShare = salary / totalSalary) %>%
+  mutate(salaryShareSquared = salaryShare ^ 2) %>%
+  select(yearID, teamID, playerID, salary, salaryShare, salaryShareSquared)
+```
+
+```{r compute-team-salary-hhi}
+teams_old <- teams_old %>%
+  inner_join(salaries_old) %>%
+  group_by(yearID, teamID, G, W, L, winPercentage, totalSalary) %>%
+  summarize(HHI = sum(salaryShareSquared))
+```
+
+```{r summary-statistics}
+summary(teams_old$winPercentage)
+summary(teams_old$totalSalary)
+summary(teams_old$HHI)
+```
+
+
 ## Reproduction Notes
+
+- original author did not describe how time fixed effects are accounted for (across expansion periods or every year)
+- no discussion about limiting to 25 man roster vs 40 man roster
 
 ## Reproduction Analysis
 
@@ -44,8 +87,8 @@ salaries <- read_csv(here('salaries.csv'))
 
 ## Extension Code
 
-```{r example-2}
-
+```{r statistic-distributions}
+# TODO: plot distribution of win percentage, total salary, HHI
 ```
 
 ## Extension Notes
