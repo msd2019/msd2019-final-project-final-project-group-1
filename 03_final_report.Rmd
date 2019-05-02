@@ -75,25 +75,25 @@ summary(teams_old$totalSalaryMil)
 summary(teams_old$HHI)
 ```
 
-```{r linear-fixed-effects-regression}
+```{r linear-fixed-effects-regression-old}
 linear_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear + teamID + 0,
                        data = teams_old)
 summary(linear_fixed_old)$coefficients
 ```
 
-```{r linear-random-effects-regression}
+```{r linear-random-effects-regression-old}
 linear_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
                         data = teams_old)
 summary(linear_random_old)$coefficients
 ```
 
-```{r log-log-fixed-effects-regression}
+```{r log-log-fixed-effects-regression-old}
 log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear + teamID + 0,
                         data = teams_old)
 summary(log_log_fixed_old)$coefficients
 ```
 
-```{r log-log-random-effects-regression}
+```{r log-log-random-effects-regression-old}
 log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear,
                          data = teams_old)
 summary(log_log_random_old)$coefficients
@@ -113,8 +113,91 @@ summary(log_log_random_old)$coefficients
 
 ## Extension Code
 
-```{r statistic-distributions}
+```{r clean-new-data}
+teams_new <- teams %>%
+  filter(1999 <= yearID & yearID <= 2016) %>%
+  mutate(winPercentage = W / (W + L) * 1000) %>%
+  mutate(normalizedYear = yearID - 1985)
+
+salaries_new <- salaries %>%
+  filter(1999 <= yearID & yearID <= 2016) %>%
+  mutate(salaryMil = salary / 1000000)
+```
+
+```{r salary-vs-time}
+salary_vs_time <- salaries %>%
+  group_by(yearID) %>%
+  summarize(avg = mean(salary), max = max(salary))
+
+ggplot(data = salary_vs_time) +
+  geom_point(aes(x = yearID, y = avg, color = 'Average')) +
+  geom_smooth(aes(x = yearID, y = avg, color = 'Average')) + 
+  geom_point(aes(x = yearID, y = max, color = 'Maximum')) + 
+  geom_smooth(aes(x = yearID, y = max, color = 'Maximum')) +
+  scale_color_manual(values = c('#4286f4', '#f44741')) +
+  scale_y_continuous(labels = comma) + 
+  labs(color = 'Type') +
+  xlab('Year') +
+  ylab('Player Salary')
+```
+
+```{r team-salary-vs-time}
+current_teamIDs <- c('ARI', 'ATL', 'BAL', 'BOS', 'CHA', 'CHN', 'CIN', 'CLE', 'COL', 'DET',
+                     'HOU', 'KCA', 'LAA', 'LAN', 'MIA', 'MIL', 'MIN', 'NYA', 'NYN', 'OAK',
+                     'PHI', 'PIT', 'SDN', 'SEA', 'SFN', 'SLN', 'TBA', 'TEX', 'TOR', 'WAS')
+team_colors <- c('#cccccc', '#cccccc', '#cccccc', '#BD3039', '#cccccc',
+                 '#cccccc', '#cccccc', '#cccccc', '#cccccc', '#cccccc',
+                 '#cccccc', '#cccccc', '#cccccc', '#0157a8', '#cccccc',
+                 '#cccccc', '#cccccc', '#11325b', '#cccccc', '#04683b',
+                 '#cccccc', '#cccccc', '#cccccc', '#cccccc', '#cccccc',
+                 '#cccccc', '#cccccc', '#cccccc', '#cccccc', '#cccccc')
+colored_teamIDs <- c('BOS', 'LAN', 'NYA', 'OAK')
+
+team_salary_vs_time <- salaries %>%
+  filter(teamID %in% current_teamIDs) %>%
+  group_by(yearID, teamID) %>%
+  summarize(avg = mean(salary)) %>%
+  mutate(flag = teamID %in% colored_teamIDs)
+
+underlay_data <- filter(team_salary_vs_time, !flag)
+overlay_data <- filter(team_salary_vs_time, flag)
+
+ggplot() +
+  geom_point(data = underlay_data, aes(x = yearID, y = avg, color = teamID)) +
+  geom_line(data = underlay_data, aes(x = yearID, y = avg, color = teamID)) +
+  geom_point(data = overlay_data, aes(x = yearID, y = avg, color = teamID)) +
+  geom_line(data = overlay_data, aes(x = yearID, y = avg, color = teamID)) +
+  scale_y_continuous(labels = comma) + 
+  scale_color_manual(values = team_colors) +
+  labs(color = 'Team') +
+  xlab('Year') +
+  ylab('Average Team Salary')
+```
+
+```{r hhi-vs-time}
+```
+
+```{r hhi-vs-salary}
+```
+
+```{r salary-distributions}
 # TODO: plot distribution of win percentage, total salary, HHI
+```
+
+```{r hhi-distributions}
+# TODO: plot distribution of win percentage, total salary, HHI
+```
+
+```{r linear-fixed-effects-regression-new}
+```
+
+```{r linear-random-effects-regression-new}
+```
+
+```{r log-log-fixed-effects-regression-new}
+```
+
+```{r log-log-random-effects-regression-new}
 ```
 
 ## Extension Notes
