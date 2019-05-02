@@ -10,8 +10,8 @@ output:
 
 ```{r setup, include=FALSE}
 library(here)
-library(tidyverse)
 library(scales)
+library(tidyverse)
 
 theme_set(theme_bw())
 
@@ -31,12 +31,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Reproduction Code
 
-```{r load-data}
+```{r load-data, message = FALSE}
 teams <- read_csv(here('teams.csv'))
 salaries <- read_csv(here('salaries.csv'))
 ```
 
-```{r clean-data}
+```{r clean-data, message = FALSE}
 teams <- teams %>%
   filter(1985 <= yearID & yearID <= 2016) %>%
   mutate(winPercentage = W / (W + L) * 1000)
@@ -46,14 +46,14 @@ salaries <- salaries %>%
   mutate(salaryMil = salary / 1000000)
 ```
 
-```{r compute-team-salary-total}
+```{r compute-team-salary-total, message = FALSE}
 teams <- teams %>%
   inner_join(salaries) %>%
   group_by(yearID, teamID, G, W, L, winPercentage) %>%
   summarize(totalSalaryMil = sum(salaryMil))
 ```
 
-```{r compute-player-salary-share}
+```{r compute-player-salary-share, message = FALSE}
 salaries <- salaries %>% 
   inner_join(teams) %>%
   mutate(salaryShare = salaryMil / totalSalaryMil * 100) %>%
@@ -61,14 +61,14 @@ salaries <- salaries %>%
   select(yearID, teamID, playerID, salary, salaryShare, salaryShareSquared)
 ```
 
-```{r compute-team-salary-hhi}
+```{r compute-team-salary-hhi, message = FALSE}
 teams <- teams %>%
   inner_join(salaries) %>%
   group_by(yearID, teamID, G, W, L, winPercentage, totalSalaryMil) %>%
   summarize(HHI = sum(salaryShareSquared))
 ```
 
-```{r subset-old-data}
+```{r subset-old-data, message = FALSE}
 teams_old <- teams %>%
   filter(1985 <= yearID & yearID <= 1998) %>%
   mutate(normalizedYear = yearID - 1985)
@@ -84,7 +84,8 @@ summary(teams_old$HHI)
 ```
 
 ```{r linear-fixed-effects-regression-old}
-linear_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear + teamID + 0,
+linear_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
+                                                 normalizedYear + teamID + 0,
                        data = teams_old)
 summary(linear_fixed_old)$coefficients
 ```
@@ -96,13 +97,15 @@ summary(linear_random_old)$coefficients
 ```
 
 ```{r log-log-fixed-effects-regression-old}
-log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear + teamID + 0,
+log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
+                                                       normalizedYear + teamID + 0,
                         data = teams_old)
 summary(log_log_fixed_old)$coefficients
 ```
 
 ```{r log-log-random-effects-regression-old}
-log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) + normalizedYear,
+log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
+                                                        normalizedYear,
                          data = teams_old)
 summary(log_log_random_old)$coefficients
 ```
@@ -121,7 +124,7 @@ summary(log_log_random_old)$coefficients
 
 ## Extension Code
 
-```{r salary-vs-time}
+```{r salary-vs-time, message = FALSE, out.width = '70%', fig.align = 'center'}
 salary_vs_time <- salaries %>%
   group_by(yearID) %>%
   summarize(avg = mean(salary), max = max(salary))
@@ -138,28 +141,28 @@ ggplot(data = salary_vs_time) +
   ylab('Player Salary')
 ```
 
-```{r player-salary-distributions}
+```{r player-salary-distributions, message = FALSE, out.width = '55%', fig.align = 'center'}
 salaries_1985 <- filter(salaries, yearID == 1985)
 salaries_1998 <- filter(salaries, yearID == 1998)
 salaries_2016 <- filter(salaries, yearID == 2016)
 
 ggplot(data = salaries_1985) +
-  geom_histogram(aes(x = salary, y = (..count..)/sum(..count..))) +
-  xlab('Player Salary') +
-  ylab('Percentage of All Salaries')
+  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
+  xlab('Player Salary in 1985') +
+  ylab('Percentage of All Salaries in 1985')
 
 ggplot(data = salaries_1998) +
-  geom_histogram(aes(x = salary, y = (..count..)/sum(..count..))) +
-  xlab('Player Salary') +
-  ylab('Percentage of All Salaries')
+  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
+  xlab('Player Salary in 1998') +
+  ylab('Percentage of All Salaries in 1998')
 
 ggplot(data = salaries_2016) +
-  geom_histogram(aes(x = salary, y = (..count..)/sum(..count..))) +
-  xlab('Player Salary') +
-  ylab('Percentage of All Salaries')
+  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
+  xlab('Player Salary in 2016') +
+  ylab('Percentage of All Salaries in 2016')
 ```
 
-```{r team-salary-vs-time}
+```{r team-salary-vs-time, message = FALSE, out.width = '80%', fig.align = 'center'}
 current_teamIDs <- c('ARI', 'ATL', 'BAL', 'BOS', 'CHA', 'CHN', 'CIN', 'CLE', 'COL', 'DET',
                      'HOU', 'KCA', 'LAA', 'LAN', 'MIA', 'MIL', 'MIN', 'NYA', 'NYN', 'OAK',
                      'PHI', 'PIT', 'SDN', 'SEA', 'SFN', 'SLN', 'TBA', 'TEX', 'TOR', 'WAS')
@@ -192,7 +195,7 @@ ggplot() +
   ylab('Average Team Salary')
 ```
 
-```{r hhi-vs-time}
+```{r hhi-vs-time, message = FALSE, out.width = '70%', fig.align = 'center'}
 hhi_vs_time <- teams %>%
   group_by(yearID) %>%
   summarize(avg = mean(HHI))
@@ -204,7 +207,7 @@ ggplot(data = hhi_vs_time) +
   ylab('Average Intrateam HHI')
 ```
 
-```{r hhi-vs-total-salary}
+```{r hhi-vs-total-salary, message = FALSE, out.width = '70%', fig.align = 'center'}
 year_to_period <- function(year) {
   if (year <= 1992) {
     return('Pre 1993')
@@ -224,11 +227,12 @@ ggplot(data = hhi_vs_total_salary) +
   geom_point(aes(x = totalSalaryMil * 1000000, y = HHI, color = period)) +
   scale_x_log10(labels = comma) +
   scale_y_log10() +
+  labs(color = 'Period') +
   xlab('Total Team Salary') +
   ylab('Team HHI')
 ```
 
-```{r subset-new-data}
+```{r subset-new-data, message = FALSE}
 teams_old <- teams %>%
   filter(1999 <= yearID & yearID <= 2016) %>%
   mutate(normalizedYear = yearID - 1999)
