@@ -37,6 +37,7 @@ salaries <- read_csv(here('salaries.csv'))
 ```
 
 ```{r clean-data, message = FALSE}
+teams$WSWin <- as.logical(teams$WSWin == 'Y')
 teams <- teams %>%
   filter(1985 <= yearID & yearID <= 2016) %>%
   mutate(winPercentage = W / (W + L) * 1000)
@@ -49,7 +50,7 @@ salaries <- salaries %>%
 ```{r compute-team-salary-total, message = FALSE}
 teams <- teams %>%
   inner_join(salaries) %>%
-  group_by(yearID, teamID, G, W, L, winPercentage) %>%
+  group_by(yearID, teamID, G, W, L, WSWin, winPercentage) %>%
   summarize(totalSalaryMil = sum(salaryMil))
 ```
 
@@ -64,7 +65,7 @@ salaries <- salaries %>%
 ```{r compute-team-salary-hhi, message = FALSE}
 teams <- teams %>%
   inner_join(salaries) %>%
-  group_by(yearID, teamID, G, W, L, winPercentage, totalSalaryMil) %>%
+  group_by(yearID, teamID, G, W, L, winPercentage, WSWin, totalSalaryMil) %>%
   summarize(HHI = sum(salaryShareSquared))
 ```
 
@@ -211,8 +212,11 @@ ggplot(data = hhi_vs_time) +
 ```
 
 ```{r hhi-distributions, message = FALSE, out.width = '55%', fig.align = 'center'}
-ggplot(data = teams) +
+ws_winners <- filter(teams, WSWin)
+
+ggplot(data = filter(teams, mean(teams$HHI) - 5 * sd(teams$HHI) <= HHI & HHI <= mean(teams$HHI) + 5 * sd(teams$HHI))) +
   geom_histogram(aes(x = HHI, y = (..count..) / sum(..count..))) +
+  geom_vline(data = ws_winners, aes(xintercept = HHI), color = 'blue') +
   xlab('Team HHI') +
   ylab('Fraction of All HHI Values')
 ```
