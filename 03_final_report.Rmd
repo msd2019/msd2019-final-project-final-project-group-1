@@ -1,5 +1,6 @@
 ---
-title: 'MSD Final Project Report'
+title: 'MSD 2019 Final Project'
+subtitle: 'A replication and extension of Wage disparity and team productivity: evidence from Major League Baseball by Craig Depkin, 1999'
 author: 'Forrest Hofmann (fhh2112) & Sagar Lal (sl3946)'
 date: '`r Sys.time()`'
 output:
@@ -289,3 +290,11 @@ summary(log_log_random_new)$coefficients[1:4,]
 - note that minimum salary has increased over time: https://www.baseball-reference.com/bullpen/Minimum_salary
 
 ## Extension Analysis
+
+# Postface
+
+The following is a list of all packages used to generate these results.
+
+```{r}
+sessionInfo()
+```
