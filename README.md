@@ -9,6 +9,6 @@ A complete report of our results is in `03_final_report.pdf`, which can be gener
 The repository is structured as follows:
 
 1. `01_download_data.sh` gets the original data used by the authors and places a copy in `data/`
-2. `02_select_data.sh` selects the relevant data and saves it in `data/original_data_clean.Rdata`
+2. `02_select_data.sh` selects the relevant data and creates `data/salaries.csv` and `data/teams.csv`
 3. `03_final_report.Rmd` analyzes both the original data and new data to replicate and extend the results of the original paper, and produces the final report `03_final_report.pdf`
 4. `04_original_paper.pdf` is the original publication

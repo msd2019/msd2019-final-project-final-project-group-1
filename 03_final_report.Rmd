@@ -32,8 +32,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Reproduction Code
 
 ```{r load-data, message = FALSE}
-teams <- read_csv(here('teams.csv'))
-salaries <- read_csv(here('salaries.csv'))
+teams <- read_csv(here('data/teams.csv'))
+salaries <- read_csv(here('data/salaries.csv'))
 ```
 
 ```{r clean-data, message = FALSE}
