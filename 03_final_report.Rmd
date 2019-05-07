@@ -42,11 +42,15 @@ salaries <- read_csv(here('data/salaries.csv'))
 teams$WSWin <- as.logical(teams$WSWin == 'Y')
 teams <- teams %>%
   filter(1985 <= yearID & yearID <= 2016) %>%
-  mutate(winPercentage = W / (W + L) * 1000)
+  mutate(winPercentage = W / (W + L) * 1000) %>%
+    filter(yearID != 1987) %>% 
+    filter(teamID != 'TEX')
 
 salaries <- salaries %>%
   filter(1985 <= yearID & yearID <= 2016) %>%
-  mutate(salaryMil = salary / 1000000)
+  mutate(salaryMil = salary / 1000000) %>%
+  filter(yearID != 1987) %>% 
+    filter(teamID != 'TEX')
 ```
 
 ```{r compute-team-salary-total, message = FALSE}
@@ -64,9 +68,9 @@ salaries <- salaries %>%
   select(yearID, teamID, playerID, salary, salaryShare, salaryShareSquared)
 
 #Clearly missing lots of data for this datapoint https://www.baseball-reference.com/teams/TEX/1987.shtml
-rangers_1987 <- salaries %>%
-  filter(yearID != 1987) %>% 
-    filter(teamID != 'TEX')
+# rangers_1987 <- salaries %>%
+#   filter(yearID == 1987) %>% 
+#     filter(teamID == 'TEX')
 
 ```
 
@@ -108,19 +112,19 @@ linear_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normali
 summary(linear_random_old)$coefficients[1:4,]
 ```
 
-```{r log-log-fixed-effects-regression-old}
-log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
-                                                       normalizedYear + teamID + 0,
-                        data = teams_old)
-summary(log_log_fixed_old)$coefficients[1:3,]
-```
+# ```{r log-log-fixed-effects-regression-old}
+# log_log_fixed_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
+#                                                        normalizedYear + teamID + 0,
+#                         data = teams_old)
+# summary(log_log_fixed_old)$coefficients[1:3,]
+# ```
 
-```{r log-log-random-effects-regression-old}
-log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
-                                                        normalizedYear,
-                         data = teams_old)
-summary(log_log_random_old)$coefficients[1:4,]
-```
+# ```{r log-log-random-effects-regression-old}
+# log_log_random_old <- lm(formula = log(winPercentage) ~ log(totalSalaryMil) + log(HHI) +
+#                                                         normalizedYear,
+#                          data = teams_old)
+# summary(log_log_random_old)$coefficients[1:4,]
+# ```
 
 ## Reproduction Notes
 
