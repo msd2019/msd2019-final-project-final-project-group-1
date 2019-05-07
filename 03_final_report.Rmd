@@ -382,7 +382,52 @@ atk_random_new <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalized
 summary(linear_random_new)$coefficients[1:4,]
 summary(atk_random_new)$coefficients[1:4,]
 ```
+```{r try predicting with models}
+teams <- teams %>%
+  mutate(normalizedYear = yearID - 1985)
 
+set.seed(42)
+num_folds <- 5
+num_rows <- nrow(teams)
+
+ndx <- sample(1:num_rows, num_rows, replace=F)
+
+train_data <- teams[ndx, ] %>%
+  mutate(fold = (row_number() %% num_folds) + 1)
+
+#head(train_data)
+#BUGtemp_train <- train_data %>% group_by(fold) %>% summarize(count = n())
+
+# do 5-fold cross-validation
+validate_err <- c()
+train_err <- c()
+
+for (f in 1:num_folds) {
+  # fit on the training data
+  temp_train <- filter(train_data, fold != f)
+  model <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
+                                                 normalizedYear + teamID + 0,
+                       data = temp_train)
+  
+  train_err[f] <- sqrt(mean( (predict (model, temp_train) - temp_train$winPercentage) ^2) )
+  
+  
+  # evaluate on the validation data
+  temp_validate <- filter(train_data, fold == f)
+  validate_err[f] <- sqrt(mean( (predict (model, temp_validate) - temp_validate$winPercentage) ^2) )
+}
+
+# compute the average validation error across folds
+# and the standard error on this estimate
+avg_validate_err <- mean(validate_err)
+se_validate_err <- sd(validate_err) / sqrt(num_folds)
+
+avg_train_err <- mean(train_err)
+se_train_err <- sd(train_err) / sqrt(num_folds)
+  
+
+
+```
 
 ## Extension Notes
 
