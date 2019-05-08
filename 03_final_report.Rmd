@@ -4,6 +4,11 @@ subtitle: 'A replication and extension of Wage disparity and team productivity: 
 author: 'Forrest Hofmann (fhh2112) & Sagar Lal (sl3946)'
 date: '`r Sys.time()`'
 output:
+  html_document:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
   pdf_document:
     toc: yes
     toc_depth: 3
