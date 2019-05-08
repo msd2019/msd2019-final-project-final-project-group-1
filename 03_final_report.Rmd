@@ -18,6 +18,7 @@ library(tidyverse)
 theme_set(theme_bw())
 knitr::opts_chunk$set(echo = TRUE)
 set.seed(42)
+options(warn=-1)
 ```
 
 # Introduction
@@ -115,6 +116,28 @@ summary(hhi_random_old)$coefficients[1:4,]
 
 ## Extension Code and Analysis
 
+```{r subset-new-data, message = FALSE}
+teams_new <- teams %>%
+  filter(1999 <= yearID & yearID <= 2016) %>%
+  mutate(normalizedYear = yearID - 1999)
+
+salaries_new <- salaries %>%
+  filter(1999 <= yearID & yearID <= 2016)
+```
+
+```{r linear-fixed-effects-regression-hhi-new}
+hhi_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear +
+                                              teamID + 0,
+                    data = teams_new)
+summary(hhi_fixed_new)$coefficients[1:3,]
+```
+
+```{r linear-random-effects-regression-hhi-new}
+hhi_random_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
+                     data = teams_new)
+summary(hhi_random_new)$coefficients[1:4,]
+```
+
 ```{r salary-vs-time, message = FALSE, out.width = '70%', fig.align = 'center'}
 salary_vs_time <- salaries %>%
   group_by(yearID) %>%
@@ -138,20 +161,23 @@ salaries_1998 <- filter(salaries, yearID == 1998)
 salaries_2016 <- filter(salaries, yearID == 2016)
 
 ggplot(data = salaries_1985) +
-  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
-  scale_x_continuous(labels = comma) + 
-  xlab('Player Salary in 1985') +
+  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..)), binwidth = 150000) +
+  geom_vline(xintercept = max(salaries_1985$salary), color = 'red', linetype = 'dashed') +
+  scale_x_continuous(limits = c(0, max(salaries$salary)), labels = comma) +  xlab('Player Salary in 1985') +
   ylab('Fraction of All Salaries in 1985')
 
 ggplot(data = salaries_1998) +
-  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
-  scale_x_continuous(labels = comma) + 
+  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..)), binwidth = 150000) +
+  geom_vline(xintercept = max(salaries_1998$salary), color = 'red', linetype = 'dashed') +
+  xlim(0, max(salaries$salary)) +
+  scale_x_continuous(limits = c(0, max(salaries$salary)), labels = comma) +
   xlab('Player Salary in 1998') +
   ylab('Fraction of All Salaries in 1998')
 
 ggplot(data = salaries_2016) +
-  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..))) +
-  scale_x_continuous(labels = comma) + 
+  geom_histogram(aes(x = salary, y = (..count..) / sum(..count..)), binwidth = 150000) +
+  geom_vline(xintercept = max(salaries_2016$salary), color = 'red', linetype = 'dashed') +
+  scale_x_continuous(limits = c(0, max(salaries$salary)), labels = comma) +
   xlab('Player Salary in 2016') +
   ylab('Fraction of All Salaries in 2016')
 ```
@@ -205,7 +231,7 @@ ggplot(data = hhi_vs_time) +
 ggplot(data = filter(teams, mean(teams$HHI) - 5 * sd(teams$HHI) <= HHI &
                             HHI <= mean(teams$HHI) + 5 * sd(teams$HHI))) +
   geom_histogram(aes(x = HHI, y = (..count..) / sum(..count..))) +
-  geom_vline(data = filter(teams, WSWin), aes(xintercept = HHI), linetype = 'dashed') +
+  geom_vline(data = filter(teams, WSWin), aes(xintercept = HHI), color = 'blue', linetype = 'dashed') +
   xlab('Team HHI') +
   ylab('Fraction of All HHI Values')
 ```
@@ -231,28 +257,6 @@ ggplot(data = hhi_vs_total_salary) +
   labs(color = 'Period') +
   xlab('Total Team Salary') +
   ylab('Team HHI')
-```
-
-```{r subset-new-data, message = FALSE}
-teams_new <- teams %>%
-  filter(1999 <= yearID & yearID <= 2016) %>%
-  mutate(normalizedYear = yearID - 1999)
-
-salaries_new <- salaries %>%
-  filter(1999 <= yearID & yearID <= 2016)
-```
-
-```{r linear-fixed-effects-regression-hhi-new}
-hhi_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear +
-                                              teamID + 0,
-                    data = teams_new)
-summary(hhi_fixed_new)$coefficients[1:3,]
-```
-
-```{r linear-random-effects-regression-hhi-new}
-hhi_random_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
-                     data = teams_new)
-summary(hhi_random_new)$coefficients[1:4,]
 ```
 
 We compute the Gini coefficient for each team's salary. For more information, see https://en.wikipedia.org/wiki/Gini_coefficient.
