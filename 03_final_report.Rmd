@@ -11,13 +11,13 @@ output:
 
 ```{r setup, include=FALSE}
 library(here)
+library(ineq)
 library(scales)
 library(tidyverse)
-library(ineq)
 
 theme_set(theme_bw())
-
 knitr::opts_chunk$set(echo = TRUE)
+set.seed(42)
 ```
 
 # Introduction
@@ -31,28 +31,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Reproduction
 
-## Reproduction Code
+## Reproduction Code and Analysis
 
 ```{r load-data, message = FALSE}
 teams <- read_csv(here('data/teams.csv'))
 salaries <- read_csv(here('data/salaries.csv'))
 ```
 
+We clean the data by calculating the win percentage and removing an incomplete data point. The Lahman database is clearly missing some data for the 1987 Texas Rangers. For full data, see https://www.baseball-reference.com/teams/TEX/1987.shtml.
+
 ```{r clean-data, message = FALSE}
 teams$WSWin <- as.logical(teams$WSWin == 'Y')
 teams <- teams %>%
   filter(1985 <= yearID & yearID <= 2016) %>%
   mutate(winPercentage = W / (W + L) * 1000) %>%
-    filter(yearID != 1987) %>% 
-    filter(teamID != 'TEX')
+  filter(yearID != 1987 & teamID != 'TEX')
 
 salaries <- salaries %>%
   filter(1985 <= yearID & yearID <= 2016) %>%
   mutate(salaryMil = salary / 1000000) %>%
-  filter(yearID != 1987) %>%  
-    filter(teamID != 'TEX')
-
-#Clearly missing lots of data for this datapoint hence its removal https://www.baseball-reference.com/teams/TEX/1987.shtml
+  filter(yearID != 1987 & teamID != 'TEX')
 ```
 
 ```{r compute-team-salary-total, message = FALSE}
@@ -81,9 +79,6 @@ teams <- teams %>%
 teams_old <- teams %>%
   filter(1985 <= yearID & yearID <= 1998) %>%
   mutate(normalizedYear = yearID - 1985)
-
-salaries_old <- salaries %>%
-  filter(1985 <= yearID & yearID <= 1998)
 ```
 
 ```{r summary-statistics}
@@ -95,18 +90,19 @@ summary(teams_old$HHI)
 sd(teams_old$HHI)
 ```
 
-```{r linear-fixed-effects-regression-old}
-linear_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
-                                                 normalizedYear + teamID + 0,
-                       data = teams_old)
-summary(linear_fixed_old)$coefficients[1:3,]
+```{r linear-fixed-effects-regression-hhi-old}
+hhi_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear +
+                                              teamID + 0,
+                    data = teams_old)
+summary(hhi_fixed_old)$coefficients[1:3,]
 ```
 
-```{r linear-random-effects-regression-old}
-linear_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
-                        data = teams_old)
-summary(linear_random_old)$coefficients[1:4,]
+```{r linear-random-effects-regression-hhi-old}
+hhi_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
+                     data = teams_old)
+summary(hhi_random_old)$coefficients[1:4,]
 ```
+
 ## Reproduction Notes
 
 - original author did not describe how time fixed effects are accounted for (across expansion periods or every year)
@@ -114,12 +110,10 @@ summary(linear_random_old)$coefficients[1:4,]
 - no discussion of cut players, traded players
 - no discussion of signing bonuses
 
-## Reproduction Analysis
-
 
 # Extension
 
-## Extension Code
+## Extension Code and Analysis
 
 ```{r salary-vs-time, message = FALSE, out.width = '70%', fig.align = 'center'}
 salary_vs_time <- salaries %>%
@@ -208,29 +202,27 @@ ggplot(data = hhi_vs_time) +
 ```
 
 ```{r hhi-distributions, message = FALSE, out.width = '55%', fig.align = 'center'}
-ggplot(data = filter(teams, mean(teams$HHI) - 5 * sd(teams$HHI) <= HHI & HHI <= mean(teams$HHI) + 5 * sd(teams$HHI))) +
+ggplot(data = filter(teams, mean(teams$HHI) - 5 * sd(teams$HHI) <= HHI &
+                            HHI <= mean(teams$HHI) + 5 * sd(teams$HHI))) +
   geom_histogram(aes(x = HHI, y = (..count..) / sum(..count..))) +
-  geom_vline(data = filter(teams, WSWin), aes(xintercept = HHI), color = 'blue', linetype = 'dashed') +
+  geom_vline(data = filter(teams, WSWin), aes(xintercept = HHI), linetype = 'dashed') +
   xlab('Team HHI') +
   ylab('Fraction of All HHI Values')
 ```
 
 ```{r hhi-vs-total-salary, message = FALSE, out.width = '70%', fig.align = 'center'}
 year_to_period <- function(year) {
-  if (year <= 1992) {
+  if (year <= 1992)
     return('Pre 1993')
-  }
-  else if (1993 <= year & year <= 1997) {
+  else if (1993 <= year & year <= 1997)
     return('Between 1993 and 1997')
-  }
-  else {
+  else
     return('Post 1997')
-  }
 }
 
-hhi_vs_total_salary <- teams %>%
-  mutate(period = year_to_period(yearID))
-hhi_vs_total_salary$period <- factor(hhi_vs_total_salary$period, levels = c('Pre 1993', 'Between 1993 and 1997', 'Post 1997'))
+hhi_vs_total_salary <- mutate(teams, period = year_to_period(yearID))
+hhi_vs_total_salary$period <- factor(hhi_vs_total_salary$period,
+                                     levels = c('Pre 1993', 'Between 1993 and 1997', 'Post 1997'))
 
 ggplot(data = hhi_vs_total_salary) +
   geom_point(aes(x = totalSalaryMil * 1000000, y = HHI, color = period)) +
@@ -250,125 +242,121 @@ salaries_new <- salaries %>%
   filter(1999 <= yearID & yearID <= 2016)
 ```
 
-```{r linear-fixed-effects-regression-new}
-linear_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
-                                                 normalizedYear + teamID + 0,
-                       data = teams_new)
-summary(linear_fixed_new)$coefficients[1:3,]
+```{r linear-fixed-effects-regression-hhi-new}
+hhi_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear +
+                                              teamID + 0,
+                    data = teams_new)
+summary(hhi_fixed_new)$coefficients[1:3,]
 ```
 
-```{r linear-random-effects-regression-new}
-linear_random_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
-                        data = teams_new)
-summary(linear_random_new)$coefficients[1:4,]
+```{r linear-random-effects-regression-hhi-new}
+hhi_random_new <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
+                     data = teams_new)
+summary(hhi_random_new)$coefficients[1:4,]
 ```
-```{r compute new inequality index- gini- and run regressions}
-#Gini coef: https://en.wikipedia.org/wiki/Gini_coefficient
 
-gini_coef <- salaries %>%
+We compute the Gini coefficient for each team's salary. For more information, see https://en.wikipedia.org/wiki/Gini_coefficient.
+
+```{r compute-team-salary-gini, message = FALSE}
+gini <- salaries %>%
   group_by(yearID, teamID) %>%
-    summarize(gini_coef = Gini(salary))
-
-teams <- teams %>%
-  inner_join(gini_coef)
-
-#Compare Gini index to HHI for old teams
-gini_old <- teams %>%
-  filter(1985 <= yearID & yearID <= 1998) %>%
-  mutate(normalizedYear = yearID - 1985)
-
-gini_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + gini_coef +
-                                                 normalizedYear + teamID + 0,
-                       data = gini_old)
-summary(gini_fixed_old)$coefficients[1:3,]
-
-gini_random_old <- lm(formula = winPercentage ~ totalSalaryMil + gini_coef + normalizedYear,
-                        data = gini_old)
-summary(gini_random_old)$coefficients[1:4,]
-
-
-#Compare Gini coef to HHI results for new teams
-gini_new <- teams %>%
-  filter(1999 <= yearID & yearID <= 2016) %>%
-  mutate(normalizedYear = yearID - 1999)
-
-gini_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + gini_coef +
-                                                 normalizedYear + teamID + 0,
-                       data = gini_new)
-summary(gini_fixed_new)$coefficients[1:3,]
-
-gini_random_new <- lm(formula = winPercentage ~ totalSalaryMil + gini_coef + normalizedYear,
-                        data = gini_new)
-summary(gini_random_new)$coefficients[1:4,]
+  summarize(gini = Gini(salary))
+teams <- inner_join(teams, gini)
 ```
-```{r compute new inequality index- Atkinson index- and run regressions}
-#Atkinson index: https://en.wikipedia.org/wiki/Atkinson_index
+
+We compute the Atkinson coefficient for each team's salary. For more information, see https://en.wikipedia.org/wiki/Atkinson_index.
+
+```{r compute-team-salary-atk, message = FALSE}
 atkinson <- salaries %>%
   group_by(yearID, teamID) %>%
-    summarize(atk = Atkinson(salary))
+  summarize(atk = Atkinson(salary))
+teams <- inner_join(teams, atkinson)
+```
 
-teams <- teams %>%
-  inner_join(atkinson)
-
-#Compare Atkinson index to HHI for old teams
-atk_old <- teams %>%
+```{r subset-modified-data, message = FALSE}
+teams_old <- teams %>%
   filter(1985 <= yearID & yearID <= 1998) %>%
   mutate(normalizedYear = yearID - 1985)
 
-atk_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + atk +
-                                                 normalizedYear + teamID + 0,
-                       data = atk_old)
-summary(atk_fixed_old)$coefficients[1:3,]
-
-atk_random_old <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedYear,
-                        data = atk_old)
-summary(atk_random_old)$coefficients[1:4,]
-
-
-#Compare Atkinson coef to HHI results for new teams
-atk_new <- teams %>%
+teams_new <- teams %>%
   filter(1999 <= yearID & yearID <= 2016) %>%
   mutate(normalizedYear = yearID - 1999)
+```
 
-atk_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + atk +
-                                                 normalizedYear + teamID + 0,
-                       data = atk_new)
+```{r linear-fixed-effects-regression-gini-old}
+gini_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + gini + normalizedYear +
+                                               teamID + 0,
+                     data = teams_old)
+summary(gini_fixed_old)$coefficients[1:3,]
+```
+
+```{r linear-random-effects-regression-gini-old}
+gini_random_old <- lm(formula = winPercentage ~ totalSalaryMil + gini + normalizedYear,
+                      data = teams_old)
+summary(gini_random_old)$coefficients[1:4,]
+```
+
+```{r linear-fixed-effects-regression-gini-new}
+gini_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + gini + normalizedYear +
+                                               teamID + 0,
+                     data = teams_new)
+summary(gini_fixed_new)$coefficients[1:3,]
+```
+
+```{r linear-random-effects-regression-gini-new}
+gini_random_new <- lm(formula = winPercentage ~ totalSalaryMil + gini + normalizedYear,
+                      data = teams_new)
+summary(gini_random_new)$coefficients[1:4,]
+```
+
+```{r linear-fixed-effects-regression-atk-old}
+atk_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedYear +
+                                              teamID + 0,
+                    data = teams_old)
+summary(atk_fixed_old)$coefficients[1:3,]
+```
+
+```{r linear-random-effects-regression-atk-old}
+atk_random_old <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedYear,
+                     data = teams_old)
+summary(atk_random_old)$coefficients[1:4,]
+```
+
+```{r linear-fixed-effects-regression-atk-new}
+atk_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedYear +
+                                              teamID + 0,
+                    data = teams_new)
 summary(atk_fixed_new)$coefficients[1:3,]
+```
 
+```{r linear-random-effects-regression-atk-new}
 atk_random_new <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedYear,
-                        data = atk_new)
+                     data = teams_new)
 summary(atk_random_new)$coefficients[1:4,]
 ```
 
-```{r k-fold model predict, not splitting on time}
-teams <- teams %>%
-  mutate(normalizedYear = yearID - 1985) %>% 
-  ungroup()
-
-set.seed(42)
+```{r k-fold-linear-regression-prediction}
 num_folds <- 5
 num_rows <- nrow(teams)
-ndx <- sample(1:num_rows, num_rows, replace=F)
+shuffle_idx <- sample(1:num_rows, num_rows, replace = FALSE)
 
-train_data <- teams[ndx, ] %>%
-  mutate(fold = (row_number() %% num_folds) + 1)
+teams_k_fold <- teams[shuffle_idx, ] %>%
+  ungroup() %>%
+  mutate(fold = (row_number() %% num_folds) + 1) %>%
+  mutate(normalizedYear = yearID - 1985)
 
 validate_err <- c()
 train_err <- c()
 for (f in 1:num_folds) {
-  temp_train <- filter(train_data, fold != f)
+  curr_train <- filter(teams_k_fold, fold != f)
+  model <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear + teamID + 0,
+              data = curr_train)
+  train_err[f] <- sqrt(mean((predict(model, curr_train) - curr_train$winPercentage) ^ 2))
   
-  #Using fixed effects model because the data is randomly sorted
-  model <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
-                                                 normalizedYear + teamID + 0, data = temp_train)
-  train_err[f] <- sqrt(mean( (predict (model, temp_train) - temp_train$winPercentage) ^2) )
-  
-  # evaluate on the validation data
-  temp_validate <- filter(train_data, fold == f)
-  validate_err[f] <- sqrt(mean( (predict (model, temp_validate) - temp_validate$winPercentage) ^2) )
+  curr_validate <- filter(teams_k_fold, fold == f)
+  validate_err[f] <- sqrt(mean((predict(model, curr_validate) - curr_validate$winPercentage) ^ 2))
 }
 
-# compute the average validation error across folds and the standard error on this estimate
 avg_validate_err <- mean(validate_err)
 se_validate_err <- sd(validate_err) / sqrt(num_folds)
 
@@ -376,28 +364,24 @@ avg_train_err <- mean(train_err)
 se_train_err <- sd(train_err) / sqrt(num_folds)
 ```
 
-```{r use old years to train model predict on new years}
-time_train_data <- teams %>% filter(yearID < 2012)
-time_validate_data <- teams %>% filter(yearID>2011)
+```{r past-to-future-linear-regression-prediction}
+teams_pre_2011 <- teams %>%
+  filter(yearID <= 2011) %>%
+  mutate(normalizedYear = yearID - 1985)
+teams_post_2012 <- teams %>%
+  filter(yearID >= 2012) %>%
+  mutate(normalizedYear = yearID - 1985)
 
-#Using random effects model because we dont want to worry about team being good in 80s/90s and bad in 2010s
-model <- lm(formula = winPercentage ~ totalSalaryMil + HHI +
-              normalizedYear,
-            data = time_train_data)
-
-time_train_err <- sqrt(mean( (predict (model, time_train_data) - time_train_data$winPercentage) ^2) )
-  
-time_validate_err <- sqrt(mean( (predict (model, time_validate_data) - time_validate_data$winPercentage) ^2) )
+time_model <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear,
+                 data = teams_pre_2011)
+time_train_err <- sqrt(mean((predict(model, teams_pre_2011) - teams_pre_2011$winPercentage) ^ 2))
+time_validate_err <- sqrt(mean((predict(model, teams_post_2012) - teams_post_2012$winPercentage) ^ 2))
 ```
 
 ## Extension Notes
 - note that minimum salary has increased over time: https://www.baseball-reference.com/bullpen/Minimum_salary
-
-- Coefficients of different inequality indexes are the same sign and have the same predictive impact (magnitudes are different because HHI has a wider range than the other two which are between 0 and 1)
-
-- Used fixed effects model when split data independent of time, ie teams from 1985 and 2016 are in the training set. Meanwhile used random effects model when split data based on time, ie teams from 1985-2011 were in training set and 2012-2016 were test set. The use of the random effects model for the latter was to account for the fact that teams might be dominant in early years but not so much in more recent years. Also handles the issue of teams not existing in training set but potentially in validation set.
-
-## Extension Analysis
+- Coefficients of different inequality indexes are the same sign and have the same predictive impact (magnitudes are different because HHI has a wider range than the other two which are between 0 and 1), so we just pick hhi in this case to show
+- Used fixed effects model when split data independent of time, ie teams from 1985 and 2016 are in the training set. Meanwhile used random effects model when split data based on time, ie teams from 1985-2011 were in training set and 2012-2016 were test set. Note that data is shuffled in this case. The use of the random effects model for the latter was to account for the fact that teams might be dominant in early years but not so much in more recent years ie dont want to worry about team being good in 80s/90s and bad in 2010s. Also handles the issue of teams not existing in training set but potentially in validation set (since teams come and go, move cities, rebrand, etc)
 - 6.4%-6.6% error in win percentage predictions for both kinds of regressions. This isn't amazing given that the range of reasonable values is roughly 40%-70% win percentage
 
 # Postface
