@@ -358,8 +358,6 @@ gini_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + gini + normalize
 summary(gini_fixed_old)$coefficients[1:3,]
 ```
 
-TODO: Analyze regression results and compare.
-
 Run the random effects regression using the Gini coefficient on data between 1985 and 1998, inclusive.
 
 ```{r linear-random-effects-regression-gini-old}
@@ -367,8 +365,6 @@ gini_random_old <- lm(formula = winPercentage ~ totalSalaryMil + gini + normaliz
                       data = teams_old)
 summary(gini_random_old)$coefficients[1:4,]
 ```
-
-TODO: Analyze regression results and compare.
 
 Run the fixed effects regression using the Gini coefficient on data between 1999 and 2016, inclusive.
 
@@ -379,8 +375,6 @@ gini_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + gini + normalize
 summary(gini_fixed_new)$coefficients[1:3,]
 ```
 
-TODO: Analyze regression results and compare.
-
 Run the random effects regression using the Gini coefficient on data between 1999 and 2016, inclusive.
 
 ```{r linear-random-effects-regression-gini-new}
@@ -389,7 +383,7 @@ gini_random_new <- lm(formula = winPercentage ~ totalSalaryMil + gini + normaliz
 summary(gini_random_new)$coefficients[1:4,]
 ```
 
-TODO: Analyze regression results and compare.
+With both the Gini and Atkinson coefficient used in place of the HHI index, our regressions are very similar to that of our replications/extensions and the original work. Specifically, the signs remain the same, while the magnitude of the coefficient for both total salary and year stay roughly the same (total salary is slightly larger and year slightly smaller). The coefficients for the Gini index and the Atkinson index are much bigger because the value of this ranges between 0-1 as opposed to between 0-10,000 for HHI. This result is significant because it suggests that perhaps HHI metric used in the original paper is a solid one and consistent with most economist's understanding of income inequality. 
 
 Run the fixed effects regression using the Atkinson coefficient on data between 1985 and 1998, inclusive.
 
@@ -400,8 +394,6 @@ atk_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedY
 summary(atk_fixed_old)$coefficients[1:3,]
 ```
 
-TODO: Analyze regression results and compare.
-
 Run the random effects regression using the Atkinson coefficient on data between 1985 and 1998, inclusive.
 
 ```{r linear-random-effects-regression-atk-old}
@@ -410,7 +402,6 @@ atk_random_old <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalized
 summary(atk_random_old)$coefficients[1:4,]
 ```
 
-TODO: Analyze regression results and compare.
 
 Run the fixed effects regression using the Atkinson coefficient on data between 1999 and 2016, inclusive.
 
@@ -421,8 +412,6 @@ atk_fixed_new <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalizedY
 summary(atk_fixed_new)$coefficients[1:3,]
 ```
 
-TODO: Analyze regression results and compare.
-
 Run the random effects regression using the Atkinson coefficient on data between 1999 and 2016, inclusive.
 
 ```{r linear-random-effects-regression-atk-new}
@@ -431,7 +420,9 @@ atk_random_new <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalized
 summary(atk_random_new)$coefficients[1:4,]
 ```
 
-TODO: Analyze regression results and compare.
+With both the Gini and Atkinson coefficient used in place of the HHI index, our regressions are very similar to that of our replications/extensions and the original work. This is the case when we ran regressions using either index for all four cases: 1985-1998 fixed effects, 1985-1998 random effects, 1999-2016 fixed effects, and 1999-2016 random effects. Specifically, the signs remain the same, while the magnitude of the coefficient for both total salary and year stay roughly the same (total salary coefficeint is slightly larger and year coefficient slightly smaller in comparison to when using HHI). The coefficients for the Gini index and the Atkinson index are much bigger because the value of this ranges between 0-1 as opposed to between 0-10,000 for HHI. This result is important because it suggests that the HHI metric used in the original paper is a solid one and consistent with most economist's understanding of income inequality.
+
+
 
 Run a $k$-fold linear regression to generate a validation error and analyze predictive performance. Here we include all teams from 1985 to 2016 as potential training data points. We used the fixed effects model.
 
@@ -464,8 +455,6 @@ avg_train_err <- mean(train_err)
 se_train_err <- sd(train_err) / sqrt(num_folds)
 ```
 
-TODO: Analyze prediction results.
-
 Use the linear regression trained on 1985 to 1998 data and predict on 1999 to 2016 data. We used the random effects model.
 
 ```{r past-to-future-linear-regression-prediction}
@@ -481,14 +470,13 @@ time_model <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedYear
 time_train_err <- sqrt(mean((predict(model, teams_pre_2011) - teams_pre_2011$winPercentage) ^ 2))
 time_validate_err <- sqrt(mean((predict(model, teams_post_2012) - teams_post_2012$winPercentage) ^ 2))
 ```
-
-TODO: Analyze prediction results.
+In this case we see an average error of 6.4 +/- 1.5 win% for the fixed effects and 6.6 +/- 1.5% for the random effects. While in an absolute sense these are relatively accurate, in a larger context they are less impressive. This is because the range of outcomes are reasonably between 40-70 win %, so 6.5% error represents roughly 20% of the range of possible outcomes. In a real world setting it means that the prediction could be off by almost 10 games. The fixed effects model was slightly more accurate than the random effects because it was trained on random selection of all data, as opposed to just the early years. Furthermore it has the additional parameter of team specific intercepts, as opposed to a general intercept, which likely allows for a better fitting of the data.
 
 ## Extension Notes
 
 - use this area for challenges and/or general notes, move analysis to under the relevant code block
-- Coefficients of different inequality indexes are the same sign and have the same predictive impact (magnitudes are different because HHI has a wider range than the other two which are between 0 and 1), so we just pick hhi in this case to show
-- Used fixed effects model when split data independent of time, ie teams from 1985 and 2016 are in the training set. Meanwhile used random effects model when split data based on time, ie teams from 1985-2011 were in training set and 2012-2016 were test set. The use of the random effects model for the latter was to account for the fact that teams might be dominant in early years but not so much in more recent years ie dont want to worry about team being good in 80s/90s and bad in 2010s. Also handles the issue of teams not existing in training set but potentially in validation set (since teams come and go, move cities, rebrand, etc)
+- Coefficients of different inequality indexes are the same sign and have the same predictive impact (magnitudes are different because HHI has a wider range than the other two which are between 0 and 1), so we just picked HHI for the predictive models.
+- Used fixed effects model when split data independent of time, ie teams from 1985 and 2016 are in the training set. Meanwhile used random effects model when split data based on time, ie teams from 1985-2011 were in training set and 2012-2016 were test set. The use of the random effects model for the latter was to account for the fact that teams might be dominant in early years but not so much in more recent years, ie dont want to worry about team being good in 80s/90s and bad in 2010s. Also handles the issue of teams not existing in training set but potentially in validation set (since teams come and go, move cities, rebrand, etc)
 - 6.4%-6.6% error in win percentage predictions for both kinds of regressions. This isn't amazing given that the range of reasonable values is roughly 40%-70% win percentage
 
 # Postface
