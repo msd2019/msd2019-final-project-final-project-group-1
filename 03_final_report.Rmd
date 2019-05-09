@@ -1,6 +1,6 @@
 ---
 title: 'MSD 2019 Final Project'
-subtitle: 'A replication and extension of Wage disparity and team productivity: evidence from Major League Baseball by Craig A. Depken II, 1999'
+subtitle: 'A replication and extension of "Wage disparity and team productivity: evidence from Major League Baseball"" by Craig A. Depken II, 1999'
 author: 'Forrest Hofmann (fhh2112) & Sagar Lal (sl3946)'
 date: '`r Sys.time()`'
 output:
@@ -28,11 +28,10 @@ options(warn=-1)
 
 # Introduction
 
-## Problem Description
-Our goal was to replicate and extend the results seen in "Wage disparity and team productivity: evidence from major league baseball" by Craig A. Depken II.
+## Problem and Paper Description
+Our goal was to replicate and extend the results seen in "Wage disparity and team productivity: evidence from major league baseball" by Craig A. Depken II. Depken's paper explores whether or not wage disparity impacts a team's performance. He examines this in the context of baseball where there are ready-made measures of both performance (team win percentage) and publicly available information about wages (player salaries). He evaluates his results with respect to two hypotheses: the danger-potential hypothesis (Ramaswamy and Rowthorn, 1991), which suggests that wage disparity indicates completementary skills of team-members and thus leads to better performance, and the team-cohesiveness theory (Levine, 1991), which suggests that it creates disfunction and thus negatively impacts performance.
 
-## Motivation
-Depken's paper explores whether or not wage disparity impacts a team's performance. He examines this in the context of baseball where there are ready-made measures of both performance (team win percentage) and publicly available information about wages (player salaries). The goal is to determine whether the danger-potential hypothesis (Ramaswamy and Rowthorn, 1991), which suggests that wage disparity indicates completementary skills of team-members and thus leads to better performance, or the team-cohesiveness theory (Levine 1991), which suggests that it creates disfunction and thus negatively impacts performance.
+## Problem Motivation
 
 ## Data Source
 
@@ -93,7 +92,7 @@ teams <- teams %>%
   summarize(HHI = sum(salaryShareSquared))
 ```
 
-Take the subset of the data from the years 1985 to 1998, inclusive, to match the Depken's analysis.
+Take the subset of the data from the years 1985 to 1998, inclusive, to match Depken's analysis.
 
 ```{r subset-old-data, message = FALSE}
 teams_old <- teams %>%
@@ -112,7 +111,7 @@ summary(teams_old$HHI)
 sd(teams_old$HHI)
 ```
 
-The results of our reproduction of summary statistics are nearly identical. In particular we see the same values for win percentage (slight differences only due to rounding). Our total salary replication tends to show slightly higher values, in terms of minimum, maximum, and mean. Our reason for this can be seen in the analysis section below. Once again, we see slightly different values for HHI in terms of minimum and mean. This is likely due to slight differences in our dataset and the one used in the original paper. As noted in our intial step, there are occasionally incomplete data points, or teams where not every player was accounted for, and this could be throwing off the mean slightly.
+The results of our reproduction of summary statistics are nearly identical. In particular, we see the same values for win percentage, with slight differences only due to rounding. Our total salary replication tends to show slightly higher values in terms of minimum, maximum, and mean. Our reasons for this can be seen in the notes section below. Once again, we see slightly different values for HHI in terms of minimum and mean. This is likely due to slight differences between our dataset and the one used in the original paper. As noted in our intial step, there are occasionally incomplete data points, or teams where not every player was accounted for, and this could be slightly throwing off the mean.
 
 
 Run the fixed effects regression on data between 1985 and 1998, inclusive.
@@ -123,9 +122,7 @@ hhi_fixed_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalizedY
                     data = teams_old)
 summary(hhi_fixed_old)$coefficients[1:3,]
 ```
-Our regression results match the paper's regression results in terms of coefficients being of the same order of magnitude and sign. Notably both show that wage disparity negatively impacts team performance. The difference is coefficients is that our regression claims that every $1M spent improves win percentage by almost 0.2% vs. the paper claims on 0.17%. In addition, if a team's salary and wage inequality stays constant, for every year later in time they will lose 0.4% win percentage compared to 0.26% in the original paper. It is encouraging that the HHI indices coefficients are quite similar with ours having a -0.046 coefficent and the original paper having one of -0.064.
-
-
+Our regression results match the paper's regression results in terms of coefficients being of the same order of magnitude and sign. Notably, both show that wage disparity negatively impacts team performance. The difference in coefficients is that our regression claims that every additional $1M spent improves win percentage by almost 0.2%, while the paper claims this amount to be 0.17%. In addition, each additional year in time corresponds to a 0.4% drop in win percentage, compared to 0.26% in the original paper. Note that the interpretation for the effect of time on win percentage should not be taken literally. Instead, the negative relationship here suggests that equal amounts of expenditure are worth less in terms of win percentage as time goes on. It is encouraging that the HHI index coefficients are quite similar. We obtain a coefficient of -0.047, while the original paper obtains a coefficient of -0.064.
 
 Run the random effects regression on data between 1985 and 1998, inclusive.
 
@@ -134,7 +131,7 @@ hhi_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalized
                      data = teams_old)
 summary(hhi_random_old)$coefficients[1:4,]
 ```
-We see similar results when replicated the random effects model, which doesn't have team specifici intercepts. It is notable that the relative changes in coefficients between our fixexd and random effects regressions are very similar to that of the original paper. Namely, our coefficients for salary and year increase in magnitude with HHI staying almost identical. One thing that was odd was that both our intercept and the original intercept had win percentage as greater than 50%. 
+We see similar results when replicating the random effects model, which doesn't have team specific intercepts. It is notable that the relative changes in coefficients between our fixed and random effects regressions are very similar to that of the original paper. Our coefficients for salary and year increase in magnitude, while our coefficient for HHI remains almost identical. One odd note is that both our intercept and the original intercept suggest a default win percentage of greater than .500 or 50\%.
 
 ## Reproduction Notes
 
@@ -142,9 +139,11 @@ We faced a couple of challenges when considering the context of the data.
 
 First, the original paper did not describe how time fixed effects are accounted for. For example, one may choose to control for different expansion periods or different years. When experimenting with different regression formulas, we found that controlling for different years yielded results most similar to the original paper.
 
-Additionally, the original paper did not include a discussion on how real world practices may affect the data. For example, there is no discussion on how baseball's 25 man roster period or 40 man roster period is handled. Moreover, there is no discussion on how to handle salaries of players that are designated to the minor leagues, cut, or traded to a different team in the middle of a season. We believe that this could have imapcted our summary statistics results. We opted to take the data from the Lahman database verbatim.
+Additionally, the original paper did not include a discussion on how real world practices may affect the data. For example, baseball seasons have different periods in which a 25-man roster or 40-man roster period is allowed. Moreover, players are often designated to the minor leagues, cut, or traded to a different team in the middle of a season. We believe that this could have impacted our summary statistics results. We opted to take the data from the Lahman database verbatim.
 
 # Extension
+
+## Extension Motivation
 
 ## Extension Code and Analysis
 
@@ -474,10 +473,8 @@ In this case we see an average error of 6.4 +/- 1.5 win% for the fixed effects a
 
 ## Extension Notes
 
-- use this area for challenges and/or general notes, move analysis to under the relevant code block
 - Coefficients of different inequality indexes are the same sign and have the same predictive impact (magnitudes are different because HHI has a wider range than the other two which are between 0 and 1), so we just picked HHI for the predictive models.
 - Used fixed effects model when split data independent of time, ie teams from 1985 and 2016 are in the training set. Meanwhile used random effects model when split data based on time, ie teams from 1985-2011 were in training set and 2012-2016 were test set. The use of the random effects model for the latter was to account for the fact that teams might be dominant in early years but not so much in more recent years, ie dont want to worry about team being good in 80s/90s and bad in 2010s. Also handles the issue of teams not existing in training set but potentially in validation set (since teams come and go, move cities, rebrand, etc)
-- 6.4%-6.6% error in win percentage predictions for both kinds of regressions. This isn't amazing given that the range of reasonable values is roughly 40%-70% win percentage
 
 # Postface
 
