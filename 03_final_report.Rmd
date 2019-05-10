@@ -26,6 +26,7 @@ set.seed(42)
 options(warn=-1)
 ```
 
+
 # Introduction
 
 ## Problem and Paper Description
@@ -143,6 +144,7 @@ hhi_random_old <- lm(formula = winPercentage ~ totalSalaryMil + HHI + normalized
 summary(hhi_random_old)$coefficients[1:4,]
 ```
 We see similar results when replicating the random effects model, which doesn't have team specific intercepts. It is notable that the relative changes in coefficients between our fixed and random effects regressions are very similar to that of the original paper. Our coefficients for salary and year increase in magnitude, while our coefficient for HHI remains almost identical. One odd note is that both our intercept and the original paper's intercept suggest a default win percentage of greater than .500 or 50\%.
+
 
 # Extension
 
@@ -421,9 +423,7 @@ atk_random_new <- lm(formula = winPercentage ~ totalSalaryMil + atk + normalized
 summary(atk_random_new)$coefficients[1:4,]
 ```
 
-With both the Gini and Atkinson coefficient used in place of HHI, our regressions are very similar to that of our replications, our extensions, and the original work. Our results are consistent for both coefficients over all four model cases: 1985 to 1998 fixed effects, 1985 to 1998 random effects, 1999 to 2016 fixed effects, and 1999 to 2016 random effects. Specifically, the signs of the coefficients remain the same while the magnitude of the coefficients for both total team salary and year remain approximately the same. The slight difference are that the coefficient of total team salary is slightly larger in magnitude, and the coefficient on year is slightly smaller in magnitude. The coefficients on the Gini index and the Atkinson index are much bigger because the value of these indices range between 0 and 1, with 0 being perfectly equitable, as opposed to the values of HHI, which range between 0 and 10,000. The fact that we see very similar magnitude coefficients for the non-inequality variables is important because it suggests that the HHI metric used in the original paper is equally acceptable as compared to the commonly used Gini index or Atkinson index.
-
-
+With both the Gini and Atkinson coefficient used in place of HHI, our regressions are very similar to that of our replications, our extensions, and the original work. Our results are consistent for both coefficients over all four model cases: 1985 to 1998 fixed effects, 1985 to 1998 random effects, 1999 to 2016 fixed effects, and 1999 to 2016 random effects. Specifically, the signs of the coefficients remain the same, while the magnitude of the coefficients for both total team salary and year remain approximately the same. The coefficients on the Gini index and the Atkinson index are much bigger because the value of these indices range between 0 and 1 as opposed to the values of HHI, which range between 0 and 10,000. Again, for all three indices, lower values represent more equality and higher values represent more inequality. The fact that we see very similar magnitudes of coefficients for the non-index variables is important, because it suggests that the HHI metric used in the original paper is equally acceptable as compared to the commonly used Gini index or Atkinson index.
 
 Run 5-fold cross validated linear regression to generate a validation error and analyze predictive performance. Here we include all teams from 1985 to 2016 as potential training data points. We use the fixed effects model since all teams serve as a training data point at least 4 times during the train and validate process. As previously discussed, the individual regression coefficients of the different inequality indices have the same predictive or explanatory power despite the differences in magnitude. We choose to use HHI here.
 
@@ -461,7 +461,6 @@ print(avg_train_err)
 print(se_train_err)
 ```
 
-
 Use the linear regression trained on 1985 to 1998 data and predict on 1999 to 2016 data. We use the random effects model here since we consider the two time periods completely separately. That is, we ignore team specific intercepts, because we do not want a franchise's performance during the former period to affect the predictions for their performance during the latter period. This also handles the issue of teams that moved or were established after the split in time periods. As previously discussed, the individual regression coefficients of the different inequality indices have the same predictive or explanatory power despite the differences in magnitude. We choose to use HHI here.
 
 ```{r past-to-future-linear-regression-prediction}
@@ -482,6 +481,7 @@ print(time_validate_err)
 ```
 
 With the fixed effects regression, we obtain an average validation error of 6.45 $\pm$ 0.15 win percentage points. With the random effects regression, we obtain a validation error of 6.15 win percentage points. In the absolute sense, these results are relatively accurate. However, they are less impressive in the context of the problem. This is because the reasonable range of win percentage outcomes are between 35\% and 65\%. Hence, 6 percentage points represent 20\% of the reasonable range of possible outcomes. In other words, the predictions generated by these regressions are typically off by around 10 of the 162 games each team plays in a season. The two models appear to have similar predictive performance.
+
 
 # Postface
 
